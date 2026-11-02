@@ -1249,7 +1249,7 @@ async function dlReport(){const D=collect();const nm=(get(D,'School Name')||'Sch
 
 
 /* ----- Google Form submission ----- */
-const FORM={url:'',school:'',email:'',code:''};   /* filled in once the Google Form exists */
+const FORM={url:'https://docs.google.com/forms/d/e/1FAIpQLSfuiyBKEpxE0cEsKRwWSX5KGTU4a6XEO_psJf8JqGUo1ZPwrg/formResponse',school:'entry.2108299985',email:'entry.1290054343',code:'entry.1774119588'};   /* filled in once the Google Form exists */
 async function sendForm(){
   const D=collect();const code=encode(D);
   if(!FORM.url){copyCode();return;}
