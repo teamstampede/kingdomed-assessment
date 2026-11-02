@@ -536,7 +536,6 @@ ul.rs{padding-left:18px;font-size:11px;line-height:1.8;color:#555;margin-bottom:
     <button class="kg-tab" onclick="sw(13)">&#128228; Upload Plan</button>
     <button class="kg-tab" onclick="sw(14)">&#128449;&#65039; Drive Setup</button>
     <button class="kg-tab" onclick="sw(15)">&#128203; Summary</button>
-    <button class="kg-tab" id="tabc" hidden onclick="sw(16)">&#128274; Consultant View</button>
   </div>
 
   <!-- TAB 0: PROFILE -->
@@ -795,11 +794,12 @@ ul.rs{padding-left:18px;font-size:11px;line-height:1.8;color:#555;margin-bottom:
     <div class="kg-field" style="margin-bottom:12px"><label>Session Observations</label><textarea placeholder="Add consulting notes, observations, and follow-up items for this client..."></textarea></div>
     <div class="kg-field" style="margin-bottom:16px"><label>Top 3 Recommended Next Steps</label><textarea placeholder="1.&#10;2.&#10;3."></textarea></div>
     <div class="kg-subsec">Submit to KingdomED</div>
-    <div class="kg-notice info"><strong>Your answers are not sent automatically.</strong> They stay in this browser until you send them. Copy your submission code (or save the file) and send it to your KingdomED consultant by email or text.</div>
+    <div class="kg-notice info"><strong>Your answers are not sent automatically.</strong> They stay in this browser until you send them. Press Submit to KingdomED to send them, or copy your submission code and send it to your consultant by email or text.</div>
     <div class="kg-action-row">
       <button class="kg-btn" onclick="sw(14)">&larr; Back</button>
       <button class="kg-btn kg-btn-gold" onclick="makeReport()">Generate my report</button>
-      <button class="kg-btn kg-btn-gold" onclick="copyCode()">Copy submission code</button>
+      <button class="kg-btn kg-btn-gold" id="sendBtn" onclick="sendForm()">Submit to KingdomED</button>
+      <button class="kg-btn" onclick="copyCode()">Copy submission code</button>
       <button class="kg-btn" id="saveBtn" hidden onclick="saveFile()">Save as file</button>
       <button class="kg-btn" id="rstBtn" onclick="resetAll()">Start over</button>
     </div>
@@ -807,44 +807,6 @@ ul.rs{padding-left:18px;font-size:11px;line-height:1.8;color:#555;margin-bottom:
     <div id="repOut" hidden style="margin-top:12px"></div>
     <textarea class="codebox" id="subCode" hidden readonly></textarea>
   </div>
-
-  <!-- TAB 16: CONSULTANT VIEW -->
-  <div class="kg-panel" id="pc">
-    <div class="kg-sec-title"><span class="gold-dot"></span>Consultant View</div>
-    <p class="kg-sec-desc" id="csrc"></p>
-    <div class="kg-notice"><strong>Private working view, not a secure one.</strong> It is hidden by its web address only, so anyone who knows the address can open it. No rates or prices are stored in the page: the rate you type below stays in this browser only.</div>
-    <div class="kg-subsec">Load a client submission</div>
-    <div class="kg-field" style="margin-bottom:10px"><label>Paste submission code or JSON</label><textarea class="codebox" id="cin" placeholder="KED1...."></textarea></div>
-    <div class="kg-action-row" style="margin-top:0;margin-bottom:6px">
-      <button class="kg-btn kg-btn-gold" onclick="loadCode()">Load</button>
-      <label class="kg-btn" style="cursor:pointer">Load file<input type="file" accept=".json,.txt" style="display:none" onchange="loadFile(event)" /></label>
-      <button class="kg-btn" onclick="CD=null;renderCons()">Use live answers</button>
-    </div>
-    <p class="muted" id="cim"></p>
-    <div class="kg-subsec">Client snapshot</div><div id="csnap"></div>
-    <div class="kg-subsec">Readiness by area</div><div id="cbars"></div>
-    <div class="kg-subsec">Services requested</div><div id="csvc"></div>
-    <div class="kg-subsec">Accreditation, budget and pay preferences</div><div id="cinv"></div>
-    <div class="kg-subsec">Planning calculator</div>
-    <div class="kg-notice info">Hours are starting assumptions, not quotes: 3 hrs per gap marked Not yet, 1.5 to 2 for in-progress or unsure items flagged for help, and a per-service hour set for each requested service (top priority counts 1.5x). Adjust the scale to match how you actually work.</div>
-    <div class="kg-input-row" style="margin-bottom:10px">
-      <div class="kg-field"><label>Your hourly rate ($)</label><input type="number" id="crate" min="0" placeholder="Enter your rate" oninput="rateSave()" /></div>
-      <div class="kg-field"><label>Hours scale (%)</label><input type="number" id="hsc" value="100" min="10" oninput="rateSave()" /></div>
-    </div>
-    <div class="kg-input-row" style="margin-bottom:12px">
-      <div class="kg-field"><label>Contingency (%)</label><input type="number" id="ccon" value="10" min="0" oninput="rateSave()" /></div>
-      <div class="kg-field"><label>Retainer months</label><input type="number" id="cmon" value="6" min="1" oninput="rateSave()" /></div>
-    </div>
-    <div id="ccalc"></div>
-    <div class="kg-subsec">Budget fit and pay structure</div><div id="cfit"></div>
-    <div class="kg-subsec">Phased plan from the gaps</div><div id="cphase"></div>
-    <div class="kg-subsec">Discovery call questions</div><div id="cdisc"></div>
-    <div class="kg-subsec">Proposal outline</div>
-    <textarea class="codebox" id="cprop" style="min-height:220px" readonly></textarea>
-    <div class="kg-action-row"><button class="kg-btn kg-btn-gold" onclick="copyProp()">Copy outline</button></div>
-    <p class="muted" id="cpm"></p>
-  </div>
-
 </div>
 
 <script>
@@ -1264,7 +1226,7 @@ async function copyProp(){const ta=$('cprop');try{await navigator.clipboard.writ
 function loadCode(){try{CD=parseSub($('cin').value);$('cim').textContent='Loaded.';}catch(e){CD=null;$('cim').textContent='That did not look like a KingdomED submission code or file.';}renderCons();}
 function loadFile(e){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('cin').value=r.result;loadCode();};r.readAsText(f);}
 function rateSave(){try{localStorage.setItem(LSR,JSON.stringify({r:nv('crate'),m:nv('cmon'),c:nv('ccon'),h:nv('hsc')}));}catch(e){}renderCons();}
-function hashView(){const t=$('tabc');if(location.hash==='#consultant'){t.hidden=false;sw(16);}else{if(!t.hidden){t.hidden=true;const a=document.querySelector('.kg-tab.active');if(a===t)sw(0);}}}
+function hashView(){const t=$('tabc');if(!t)return;if(location.hash==='#consultant'){t.hidden=false;sw(16);}else{if(!t.hidden){t.hidden=true;const a=document.querySelector('.kg-tab.active');if(a===t)sw(0);}}}
 
 
 /* ----- per-submission report ----- */
@@ -1285,11 +1247,28 @@ function makeReport(){const D=collect();const h=reportHTML(D);$('repOut').innerH
 async function dlReport(){const D=collect();const nm=(get(D,'School Name')||'School').replace(/[^A-Za-z0-9]+/g,'_').slice(0,40);const fn='KED_Report_'+nm+'.html';const doc='<!doctype html><meta charset="utf-8"><title>'+esc(nm)+' Assessment Report</title><body style="font-family:Arial,sans-serif;max-width:760px;margin:24px auto;padding:0 16px;color:#1a1a1a">'+reportHTML(D)+'<hr/><p style="font-size:10px;word-break:break-all;color:#999">Submission code: '+encode(D)+'</p></body>';
   try{if(DL){await DL.save({filename:fn,data:doc});return;}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([doc],{type:'text/html'}));a.download=fn;document.body.appendChild(a);a.click();a.remove();}catch(e){sub('Could not save the report here. Use Copy submission code instead.');}}
 
+
+/* ----- Google Form submission ----- */
+const FORM={url:'',school:'',email:'',code:''};   /* filled in once the Google Form exists */
+async function sendForm(){
+  const D=collect();const code=encode(D);
+  if(!FORM.url){copyCode();return;}
+  sub('Sending...');
+  try{
+    const fd=new URLSearchParams();
+    fd.append(FORM.school,get(D,'School Name')||'');
+    fd.append(FORM.email,get(D,'Contact Email')||'');
+    fd.append(FORM.code,code);
+    await fetch(FORM.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()});
+    sub('Submitted. Thank you! KingdomED will review your answers and contact you.');
+  }catch(e){sub('Could not send from here. Use Copy submission code and email it to your KingdomED consultant.');}
+}
+
 /* ----- init ----- */
 buildPanels();
 restore();
 (async()=>{try{if(window.claude&&claude.use){DL=await claude.use('downloads');}}catch(e){DL=null;}const b=$('saveBtn');if(b)b.hidden=!DL;})();
-try{const r=JSON.parse(localStorage.getItem(LSR)||'null');if(r){$('crate').value=r.r||'';$('cmon').value=r.m||6;$('ccon').value=r.c||10;$('hsc').value=r.h||100;}}catch(e){}
+try{const r=$('crate')?JSON.parse(localStorage.getItem(LSR)||'null'):null;if(r){$('crate').value=r.r||'';$('cmon').value=r.m||6;$('ccon').value=r.c||10;$('hsc').value=r.h||100;}}catch(e){}
 document.addEventListener('input',()=>setTimeout(persist,0));
 document.addEventListener('click',()=>setTimeout(persist,0));
 window.addEventListener('hashchange',hashView);
