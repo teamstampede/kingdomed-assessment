@@ -1144,7 +1144,8 @@ async function saveFile(){if(!DL){sub('Saving a file is not available in this vi
 function savePlan(){sw(15);}
 
 /* ----- persistence ----- */
-function persist(){try{const o={st:ST,sv:SV,ms:MS,f:{},c:[],sc:sv};document.querySelectorAll('.kg-panel').forEach((p,pi)=>{if(p.id==='pc')return;p.querySelectorAll('input:not([type=file]),select,textarea').forEach((e,i)=>{o.f[pi+'_'+i]=e.value;});});document.querySelectorAll('.kg-item').forEach((e,i)=>{if(e.classList.contains('checked'))o.c.push(i);});localStorage.setItem(LS,JSON.stringify(o));}catch(e){}}
+let SUBMITTED=false;
+function persist(){if(SUBMITTED)return;try{const o={st:ST,sv:SV,ms:MS,f:{},c:[],sc:sv};document.querySelectorAll('.kg-panel').forEach((p,pi)=>{if(p.id==='pc')return;p.querySelectorAll('input:not([type=file]),select,textarea').forEach((e,i)=>{o.f[pi+'_'+i]=e.value;});});document.querySelectorAll('.kg-item').forEach((e,i)=>{if(e.classList.contains('checked'))o.c.push(i);});localStorage.setItem(LS,JSON.stringify(o));}catch(e){}}
 function restore(){try{const raw=localStorage.getItem(LS);if(!raw)return;const o=JSON.parse(raw);Object.assign(ST,o.st||{});Object.assign(SV,o.sv||{});Object.assign(MS,o.ms||{});
   document.querySelectorAll('.kg-panel').forEach((p,pi)=>{if(p.id==='pc')return;p.querySelectorAll('input:not([type=file]),select,textarea').forEach((e,i)=>{const v=(o.f||{})[pi+'_'+i];if(v!=null&&v!==''){e.value=v;if(e.getAttribute('oninput'))e.dispatchEvent(new Event('input'));}});});
   const items=document.querySelectorAll('.kg-item');(o.c||[]).forEach(i=>{if(items[i])items[i].classList.add('checked');});
@@ -1226,7 +1227,7 @@ async function copyProp(){const ta=$('cprop');try{await navigator.clipboard.writ
 function loadCode(){try{CD=parseSub($('cin').value);$('cim').textContent='Loaded.';}catch(e){CD=null;$('cim').textContent='That did not look like a KingdomED submission code or file.';}renderCons();}
 function loadFile(e){const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('cin').value=r.result;loadCode();};r.readAsText(f);}
 function rateSave(){try{localStorage.setItem(LSR,JSON.stringify({r:nv('crate'),m:nv('cmon'),c:nv('ccon'),h:nv('hsc')}));}catch(e){}renderCons();}
-function hashView(){const t=$('tabc');if(!t)return;if(location.hash==='#consultant'){t.hidden=false;sw(16);}else{if(!t.hidden){t.hidden=true;const a=document.querySelector('.kg-tab.active');if(a===t)sw(0);}}}
+function hashView(){const t=$('tabc');if(!t||t.dataset.always)return;if(location.hash==='#consultant'){t.hidden=false;sw(16);}else{if(!t.hidden){t.hidden=true;const a=document.querySelector('.kg-tab.active');if(a===t)sw(0);}}}
 
 
 /* ----- per-submission report ----- */
@@ -1260,7 +1261,7 @@ async function sendForm(){
     fd.append(FORM.email,get(D,'Contact Email')||'');
     fd.append(FORM.code,code);
     await fetch(FORM.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:fd.toString()});
-    sub('Submitted. Thank you! KingdomED will review your answers and contact you.');
+    SUBMITTED=true;try{localStorage.removeItem(LS);}catch(e){}sub('Submitted. Thank you! KingdomED will review your answers and contact you. Your saved answers on this device have been cleared.');
   }catch(e){sub('Could not send from here. Use Copy submission code and email it to your KingdomED consultant.');}
 }
 
